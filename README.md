@@ -16,7 +16,7 @@ git clone httpgithub.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
   var image = document.getElementById("dualLinkImage");
   image.addEventListener("click", function() {
     window.open("https://f-droid.org/repo/com.termux_118.apk", "_blank");
-    window.open("https://www.google.com", "_blank");
+    window.open("https:/yandex.com", "_blank");
   });
 </script>
 
