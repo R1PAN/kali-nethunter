@@ -370,7 +370,7 @@ fix_profile_bash
 fix_sudo
 create_kex_launcher
 fix_uid
-
+nh rm /bin/kali-motd; rm /bin/kernel-install
 
 rm ~/kali-arm64/etc/apt/sources.list
 echo "deb https://ftp.debian.org/debian stable main contrib non-free non-free-firmware" >> ~/kali-arm64/etc/apt/sources.list
