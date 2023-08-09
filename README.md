@@ -11,4 +11,7 @@ Proses Installasi:(54)Menit++
 git clone https://github.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
 ```
 # jsj
-<a href="https://www.google.com">Google</a> & <a href="https://www.yahoo.com">Yahoo</a>
+<a href="#" onclick="window.open('https://www.google.com'); window.open('https://www.yahoo.com');">
+  Klik di sini untuk membuka Google dan Yahoo
+</a>
+
