@@ -4,7 +4,7 @@ Size:3GB
 Proses Installasi:(54)Menit++
 #### Download Termux
 <a href="https://f-droid.org/repo/com.termux_118.apk">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Termux_2.png" alt="Ikon Termux" width="50" height="50">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Termux_2.png" alt="Ikon Termux" width="50" height="50" style="border-radius: 50%;">
 </a>
 
 #### Download Vnc
