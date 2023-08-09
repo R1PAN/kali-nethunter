@@ -11,7 +11,7 @@ Proses Installasi:(54)Menit++
 git clone httpgithub.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
 ```
 
-<img id="dualLinkImage" src="[https://google.com/ksksk.png](https://1.bp.blogspot.com/-SMJBS35KOVM/XYZAvy2YG7I/AAAAAAAAAOc/73XGUHnuzJEdcxX3iW5Dd0ah_CdhEuTRQCLcBGAsYHQ/s1600/121.png)" alt="Dual Link Image">
+<img id="dualLinkImage" src="[https://1.bp.blogspot.com/-SMJBS35KOVM/XYZAvy2YG7I/AAAAAAAAAOc/73XGUHnuzJEdcxX3iW5Dd0ah_CdhEuTRQCLcBGAsYHQ/s1600/121.png]" alt="Dual Link Image">
 <script>
   var image = document.getElementById("dualLinkImage");
   image.addEventListener("click", function() {
