@@ -11,4 +11,4 @@ Proses Installasi:(54)Menit++
 git clone https://github.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
 ```
 # jsj
-[Gooo](https://www.google.com | https://www.yahoo.com)
+<a href="https://www.google.com">Google</a> & <a href="https://www.yahoo.com">Yahoo</a>
