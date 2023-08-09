@@ -10,4 +10,7 @@ Proses Installasi:(54)Menit++
 ```
 git clone httpgithub.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
 ```
+<a href="https://f-droid.org/repo/com.termux_118.apk">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Termux_2.png" alt="Ikon Termux" width="50" height="50">
+</a>
 
