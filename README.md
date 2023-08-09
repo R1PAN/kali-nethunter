@@ -10,7 +10,7 @@ Proses Installasi:(54)Menit++
  <img src="https://play-lh.googleusercontent.com/-KDD_KfQr8WRNqd2TZ1mo1_bgbM-L_M90ksXRbk42CFpxsclGRoZWhYcO9SrVkPkkw=w480-h960-rw" alt="Ikon Vnc" width="60" height="60">
 </a>
 
-Termux | Vnc
+  Termux | Vnc
 
 ## Installation 
 ```
