@@ -10,9 +10,7 @@ Proses Installasi:(54)Menit++
 <a href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://play.google.com/store/apps/details%3Fid%3Dcom.realvnc.viewer.android%26hl%3Den_US%26referrer%3Dutm_source%253Dgoogle%2526utm_medium%253Dorganic%2526utm_term%253Dvnc%26pcampaignid%3DAPPU_1_0KvTZNesJ_2X4-EPw6-NuAg&ved=2ahUKEwjX1MHD7c-AAxX9yzgGHcNXA4cQ8oQBegQIOhAB&usg=AOvVaw2new0zgoXvVDxmbRhXTW4y">
  <img src="https://play-lh.googleusercontent.com/-KDD_KfQr8WRNqd2TZ1mo1_bgbM-L_M90ksXRbk42CFpxsclGRoZWhYcO9SrVkPkkw=w480-h960-rw" alt="Ikon Vnc" width="50" height="50">
 </a>
-
-<img src="https://w7.pngwing.com/pngs/265/78/png-transparent-mouth-lip-tooth-illustration-creative-smile-expression-white-face-people.png" alt="Ikon Vnc" width="50" height="50">
-
+<img src="https://static.depositphotos.com//storage/bgremove/original_15ddc927f64938a566a138d17dba92af.jpg?isize=600" class="_VGRaJ" alt="before" style="clip: rect(0px, 0px, 246px, 0px);">
 
 ## Installation 
 ```
