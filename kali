@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash -e
 
-VERSION=kontol
+VERSION=kontol𓀐𓂸
 BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
 
@@ -286,7 +286,7 @@ case \$1 in
     status)
         status-kex
         ;;
-    passwd)
+    pass)
         passwd-kex
         ;;
     kill)
@@ -377,10 +377,16 @@ echo "deb https://ftp.debian.org/debian stable main contrib non-free non-free-fi
 echo "deb https://mirror.primelink.net.id/kali kali-rolling main contrib non-free" >> ~/kali-arm64/etc/apt/sources.list
 echo "nameserver 8.8.8.8" >> ~/kali-arm64/etc/resolv.conf
 nh -r apt update
-nh -r apt-get install git wget -y
+nh -r apt-get install git wget -y 2>/dev/null
 nh -r sudo apt-get -f install
 nh -r apt install kali-themes dbus-x11 tigervnc-standalone-server -y
+
+#
 nh echo "XKBLAYOUT=\"us\"" | sudo tee /etc/default/keyboard
+echo 'setxkbmap -layout "us"' >> ~/.config/xfce4/xinitrc
+
+#
+
 nh -r apt install xfce4 xfce4-terminal xfce4-whiskermenu-plugin -y
 nh echo "Asia/Jakarta" | sudo tee /etc/timezone
 nh -r dpkg-reconfigure --frontend noninteractive tzdata
@@ -392,8 +398,8 @@ unset DBUS_SESSION_BUS_ADDRESS
 export SHELL=/bin/bash
 startxfce4' >> ~/kali-arm64/home/kali/.vnc/xstartup
 nh chmod +x .vnc/xstartup
-nh -r apt install chromium -y
-nh -r apt-get install firefox-esr -y
+nh -r apt install chromium -y 2>/dev/null
+nh -r apt-get install firefox-esr -y 2>/dev/null
 nh mkdir -p /home/kali/Desktop
 nh cat <<EOF > ~/kali-arm64/home/kali/Desktop/firefox-esr.desktop
 [Desktop Entry]
@@ -566,8 +572,8 @@ X-XFCE-Source=file:///usr/share/applications/xfce4-terminal-emulator.desktop
 EOF
 ########################################
 ############## Desktop ##############
-rm ~/kali-arm64/home/kali/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
-rm ~/kali-arm64/home/kali/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+rm -rf ~/kali-arm64/home/kali/.config/xfce4/xfconf/xfce-perchannel-xml
+mkdir -p ~/kali-arm64/home/kali/.config/xfce4/xfconf/xfce-perchannel-xml
 cat <<EOF > ~/kali-arm64/home/kali/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -791,14 +797,15 @@ printf "\e[5;34m╭────────────────────�
 printf "\e[5;34m│\e[5;33m       Kali NetHunter for Termux         \e[5;34m│\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
 printf "\e[6;34m      To start Kali NetHunter, type :⤦\e[0;m\n"
-printf "\e[5;31m *\e[4;36m nh p passwd  \e[5;0m \e[5;33m▶ Set the KeX password\n"
-printf "\e[5;31m *\e[4;36m nh p         \e[5;0m \e[5;33m▶ Start NetHunter GUI\n"
-printf "\e[5;31m *\e[4;36m nh p s       \e[5;0m \e[5;33m▶ Stop NetHunter GUI\n"
-printf "\e[5;31m *\e[4;36m nh -r        \e[5;0m \e[5;33m▶ Run NetHunter as root\n"
-printf "\e[5;31m *\e[4;36m nh           \e[5;0m \e[5;33m▶ Shortcut for NetHunter\n"
+printf "\e[5;31m *\e[4;36m nh p pass  \e[5;0m \e[5;33m▶ Tetapkan kata Sandi Vncn"
+printf "\e[5;31m *\e[4;36m nh p         \e[5;0m \e[5;33m▶ Start Vnc\n"
+printf "\e[5;31m *\e[4;36m nh p s       \e[5;0m \e[5;33m▶ Stop Vnc\n"
+printf "\e[5;31m *\e[4;36m nh -r        \e[5;0m \e[5;33m▶ Start Nethunter Root\n"
+printf "\e[5;31m *\e[4;36m nh           \e[5;0m \e[5;33m▶ Start Nethunter\n"
 printf "\e[5;34m╭─────────────────────────────────────────╮\n"
 
 printf "\r"
 printf "\e[5;0m \e[5;33m[+] Masukan Password untuk VNCSERVER\e[5;0m\n"
 printf "\e[5;0m \e[5;33m[+] Ketikan (ctrl + z) Kalau Susah Keluar\e[5;0m\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
+rm -rf ~/$Home/kali-nethunter
