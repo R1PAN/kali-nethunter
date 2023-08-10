@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash -e
 
-VERSION=kontol𓀐𓂸
+VERSION=l𓀐𓂸
 BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
 
@@ -52,9 +52,9 @@ function ask() {
 function prepare_fs() {
     unset KEEP_CHROOT
     if [ -d ${CHROOT} ]; then
-        if ask "Direktori kali-arm64 ditemukan. Hapus dan buat yang baru?
-" "N"; then
+        if ask "Direktori kali-arm64 ditemukan. Hapus dan buat yang baru?" "N"; then
             rm -rf kali-arm64
+            rm -r kali-arm64 2> /dev/null
         else
             KEEP_CHROOT=1
         fi
@@ -72,6 +72,7 @@ function cleanup() {
 	    fi
         fi
     fi
+    clear
 } 
 
 function check_dependencies() {
@@ -148,7 +149,7 @@ function extract_rootfs() {
 
 function create_launcher() {
     NH_SHORTCUT=${PREFIX}/bin/nh
-    cat > $NH_SHORTCUT <<- EOF
+    cat > $NH_LAUNCHER <<- EOF
 #!/data/data/com.termux/files/usr/bin/bash -e
 cd \${HOME}
 ## termux-exec sets LD_PRELOAD so let's unset it before continuing
@@ -184,7 +185,6 @@ cmdline="proot \\
         -0 \\
         -r $CHROOT \\
         -b /dev \\
-        -b /sdcard \\
         -b /proc \\
         -b $CHROOT\$home:/dev/shm \\
         -w \$home \\
@@ -194,6 +194,7 @@ cmdline="proot \\
            TERM=\$TERM \\
            LANG=C.UTF-8 \\
            \$start"
+
 
 cmd="\$@"
 if [ "\$#" == "0" ];then
@@ -327,13 +328,6 @@ function fix_uid() {
     nh -r usermod -u $USRID kali 2>/dev/null
     nh -r groupmod -g $GRPID kali 2>/dev/null
 }
-
-
-
-
-##################################
-##              Main            ##
-
 # Add some colours
 red='\033[5;31m'
 green='\033[5;33m'
@@ -377,7 +371,7 @@ echo "deb https://ftp.debian.org/debian stable main contrib non-free non-free-fi
 echo "deb https://mirror.primelink.net.id/kali kali-rolling main contrib non-free" >> ~/kali-arm64/etc/apt/sources.list
 echo "nameserver 8.8.8.8" >> ~/kali-arm64/etc/resolv.conf
 nh -r apt update
-nh -r apt-get install git wget -y 2>/dev/null
+#nh -r apt-get install git wget -y 2>/dev/null
 nh -r sudo apt-get -f install
 nh -r apt install kali-themes dbus-x11 tigervnc-standalone-server -y
 
@@ -787,7 +781,8 @@ EOF
 
 
 sleep 1
-
+rm -rf ~/$Home/kali-nethunter
+cd ~/$Home
 clear
 printf "\033[5;33m                  Nanti Atur² Sendiri Ya😄\n"
 sleep 5
@@ -797,15 +792,14 @@ printf "\e[5;34m╭────────────────────�
 printf "\e[5;34m│\e[5;33m       Kali NetHunter for Termux         \e[5;34m│\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
 printf "\e[6;34m      To start Kali NetHunter, type :⤦\e[0;m\n"
-printf "\e[5;31m *\e[4;36m nh p pass  \e[5;0m \e[5;33m▶ Tetapkan kata Sandi Vnc\n"
-printf "\e[5;31m *\e[4;36m nh p         \e[5;0m \e[5;33m▶ Start Vnc\n"
-printf "\e[5;31m *\e[4;36m nh p s       \e[5;0m \e[5;33m▶ Stop Vnc\n"
-printf "\e[5;31m *\e[4;36m nh -r        \e[5;0m \e[5;33m▶ Start Nethunter Root\n"
-printf "\e[5;31m *\e[4;36m nh           \e[5;0m \e[5;33m▶ Start Nethunter\n"
+printf "\e[5;31m *\e[4;36m nh p pass   \e[5;0m \e[5;33m▶ Tetapkan kata Sandi Vnc\n"
+printf "\e[5;31m *\e[4;36m nh p        \e[5;0m \e[5;33m▶ Start Vnc\n"
+printf "\e[5;31m *\e[4;36m nh p s      \e[5;0m \e[5;33m▶ Stop Vnc\n"
+printf "\e[5;31m *\e[4;36m nh -r       \e[5;0m \e[5;33m▶ Start Nethunter Root\n"
+printf "\e[5;31m *\e[4;36m nh          \e[5;0m \e[5;33m▶ Start Nethunter\n"
 printf "\e[5;34m╭─────────────────────────────────────────╮\n"
 
 printf "\r"
 printf "\e[5;0m \e[5;33m[+] Masukan Password untuk VNCSERVER\e[5;0m\n"
 printf "\e[5;0m \e[5;33m[+] Ketikan (ctrl + z) Kalau Susah Keluar\e[5;0m\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
-rm -rf ~/$Home/kali-nethunter
