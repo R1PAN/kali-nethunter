@@ -14,7 +14,7 @@ Proses Installasi:(54)Menit++
 
 ## Installation 
 ```
-git clone httpgithub.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
+git clone http://github.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
 ```
 
 
