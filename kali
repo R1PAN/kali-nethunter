@@ -797,7 +797,7 @@ printf "\e[5;34m╭────────────────────�
 printf "\e[5;34m│\e[5;33m       Kali NetHunter for Termux         \e[5;34m│\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
 printf "\e[6;34m      To start Kali NetHunter, type :⤦\e[0;m\n"
-printf "\e[5;31m *\e[4;36m nh p pass  \e[5;0m \e[5;33m▶ Tetapkan kata Sandi Vncn"
+printf "\e[5;31m *\e[4;36m nh p pass  \e[5;0m \e[5;33m▶ Tetapkan kata Sandi Vnc\n"
 printf "\e[5;31m *\e[4;36m nh p         \e[5;0m \e[5;33m▶ Start Vnc\n"
 printf "\e[5;31m *\e[4;36m nh p s       \e[5;0m \e[5;33m▶ Stop Vnc\n"
 printf "\e[5;31m *\e[4;36m nh -r        \e[5;0m \e[5;33m▶ Start Nethunter Root\n"
