@@ -14,7 +14,7 @@ Proses Installasi:(54)Menit++
 
 ## Installation 
 ```
-apt-get install git -y; git clone http://github.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
+pkg install git -y; git clone http://github.com/R1PAN/kali-nethunter; cd kali-nethunter; bash kali
 ```
 
 
