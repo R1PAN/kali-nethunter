@@ -439,7 +439,7 @@ function ask() {
 cd $HOME
 check_dependencies
 if [ -e "kali-arm64" ]; then
-    printf "${yellow}File atau direktori kali-arm64 ditemukan.\n"
+    printf "\n${yellow}File atau direktori kali-arm64 ditemukan.\n"
     if ask "Buat Ulang" "N"; then
     rm -rf kali-arm64
     
