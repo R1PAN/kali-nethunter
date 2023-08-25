@@ -1,92 +1,27 @@
 #!/data/data/com.termux/files/usr/bin/bash -e
 
-VERSION=l𓀐𓂸
-BASE_URL=https://kali.download/nethunter-images/current/rootfs
-USERNAME=kali
-
-
-
-
-function ask() {
-    # http://djm.me/ask
-    while true; do
-
-        if [ "${2:-}" = "Y" ]; then
-            prompt="Y/n"
-            default=Y
-        elif [ "${2:-}" = "N" ]; then
-            prompt="y/N"
-            default=N
-        else
-            prompt="y/n"
-            default=
-        fi
-
-        # Ask the question
-        printf "${light_cyan}\n[?] "
-        read -p "$1 [$prompt] " REPLY
-
-        # Default?
-        if [ -z "$REPLY" ]; then
-            REPLY=$default
-        fi
-
-        printf "${reset}"
-
-        # Check if the reply is valid
-        case "$REPLY" in
-            Y*|y*) return 0 ;;
-            N*|n*) return 1 ;;
-        esac
-    done
-}
-
-
-
-
+EXTRA_ARGS=""
+if [[ ! -z $1 ]]; then
+    EXTRA_ARGS=$1
+    if [[ $EXTRA_ARGS != "--no-check-certificate" ]]; then
+        EXTRA_ARGS=""
+    fi
+fi
 
     CHROOT=kali-arm64
-    IMAGE_NAME=kalifs-arm64-minimal.tar.xz
-    SHA_NAME=kalifs-arm64-minimal.sha512sum
-
-function prepare_fs() {
-    unset KEEP_CHROOT
-    if [ -d ${CHROOT} ]; then
-        if ask "Direktori kali-arm64 ditemukan. Hapus dan buat yang baru?" "N"; then
-            rm -rf kali-arm64
-            rm -r kali-arm64 2> /dev/null
-        else
-            KEEP_CHROOT=1
-        fi
-    fi
-} 
-
-function cleanup() {
-    if [ -f ${IMAGE_NAME} ]; then
-        if ask "Hapus file  yang diunduh?" "N"; then
-	    if [ -f ${IMAGE_NAME} ]; then
-                rm -f ${IMAGE_NAME}
-	    fi
-	    if [ -f ${SHA_NAME} ]; then
-                rm -f ${SHA_NAME}
-	    fi
-        fi
-    fi
-    clear
-} 
 
 function check_dependencies() {
     printf "${blue}\n[*] Checking package dependencies...${reset}\n"
     apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
-apt-get install wget -y
-    for i in proot tar axel; do
+
+    for i in proot tar wget pulseaudio; do
         if [ -e $PREFIX/bin/$i ]; then
             echo "  $i is OK"
         else
             printf "Installing ${i}...\n"
             apt install -y $i || {
                 printf "${red}ERROR: Failed to install packages.\n Exiting.\n${reset}"
-	        exit
+                exit
             }
         fi
     done
@@ -94,63 +29,236 @@ apt-get install wget -y
 }
 
 
-function get_url() {
-    ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    SHA_URL="${BASE_URL}/${SHA_NAME}"
-}
+function sound_setup() {
+ 
+    printf "${blue}[*] Configuring Pulseaudio...${reset}\n\n"
+        DEFAULT_PA=$PREFIX/etc/pulse/default.pa
+        cat > $DEFAULT_PA <<- EOF
+#!/data/data/com.termux/files/usr/bin/pulseaudio -nF
+#
+# This file is part of PulseAudio.
+#
+# PulseAudio is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# PulseAudio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 
-function get_rootfs() {
-    unset KEEP_IMAGE
-    if [ -f ${IMAGE_NAME} ]; then
-        if ask "File gambar ditemukan. Hapus dan unduh yang baru?
-" "N"; then
-            rm -f ${IMAGE_NAME}
-        else
-            printf "${yellow}[!] Using existing rootfs archive${reset}\n"
-            KEEP_IMAGE=1
-            return
-        fi
-    fi
-    printf "${blue}[*] Downloading rootfs...${red}\n\n"
-    get_url
-    wget ${EXTRA_ARGS} --continue "${ROOTFS_URL}"
-}
+# This startup script is used only if PulseAudio is started per-user
+# (i.e. not in system mode)
 
-function get_sha() {
-    if [ -z $KEEP_IMAGE ]; then
-        printf "\n${blue}[*] Getting SHA ... ${red}\n\n"
-        get_url
-        if [ -f ${SHA_NAME} ]; then
-            rm -f ${SHA_NAME}
-        fi
-        wget ${EXTRA_ARGS} --continue "${SHA_URL}"
-    fi
-}
+.fail
 
-function verify_sha() {
-    if [ -z $KEEP_IMAGE ]; then
-        printf "\n${blue}[*] Verifying integrity of rootfs...${red}\n\n"
-        sha512sum -c $SHA_NAME || {
-            printf "${red} Rootfs corrupted. Please run this installer again or download the file manually\n${reset}"
-            exit 1
-        }
-    fi
-}
+### Automatically restore the volume of streams and devices
+load-module module-device-restore
+load-module module-stream-restore
+load-module module-card-restore
 
-function extract_rootfs() {
-    if [ -z $KEEP_CHROOT ]; then
-        printf "\n${blue}[*] Extracting rootfs... ${reset}\n\n"
-        proot --link2symlink tar -xf $IMAGE_NAME 2> /dev/null || :
-    else        
-        printf "${yellow}[!] Using existing rootfs directory${reset}\n"
-    fi
+### Automatically augment property information from .desktop files
+### stored in /usr/share/application
+load-module module-augment-properties
+
+### Should be after module-*-restore but before module-*-detect
+load-module module-switch-on-port-available
+
+### Load audio drivers statically
+### (it's probably better to not load these drivers manually, but instead
+### use module-udev-detect -- see below -- for doing this automatically)
+#load-module module-null-sink
+#load-module module-pipe-sink
+
+### Automatically load driver modules depending on the hardware available
+.ifexists module-detect.so
+### Use the static hardware detection module (for systems that lack udev support)
+#load-module module-detect
+.endif
+
+### Automatically connect sink and source if JACK server is present
+.ifexists module-jackdbus-detect.so
+.nofail
+load-module module-jackdbus-detect channels=2
+.fail
+.endif
+
+
+### Load several protocols
+.ifexists module-esound-protocol-unix.so
+load-module module-esound-protocol-unix
+.endif
+load-module module-native-protocol-unix
+
+### Network access (may be configured with paprefs, so leave this commented
+### here if you plan to use paprefs)
+#load-module module-esound-protocol-tcp
+load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1
+
+### Load the RTP receiver module (also configured via paprefs, see above)
+#load-module module-rtp-recv
+
+### Load the RTP sender module (also configured via paprefs, see above)
+#load-module module-null-sink sink_name=rtp format=s16be channels=2 rate=44100 sink_properties="device.description='RTP Multicast Sink'"
+#load-module module-rtp-send source=rtp.monitor
+
+
+### Automatically restore the default sink/source when changed by the user
+### during runtime
+### NOTE: This should be loaded as early as possible so that subsequent modules
+### that look up the default sink/source get the right value
+load-module module-default-device-restore
+
+### Make sure we always have a sink around, even if it is a null sink.
+load-module module-always-sink
+
+### Honour intended role device property
+load-module module-intended-roles
+
+### Automatically suspend sinks/sources that become idle for too long
+load-module module-suspend-on-idle
+
+### If autoexit on idle is enabled we want to make sure we only quit
+### when no local session needs us anymore.
+.ifexists module-console-kit.so
+load-module module-console-kit
+.endif
+.ifexists module-systemd-login.so
+load-module module-systemd-login
+.endif
+
+### Enable positioned event sounds
+load-module module-position-event-sounds
+
+### Cork music/video streams when a phone stream is active
+load-module module-role-cork
+
+### Modules to allow autoloading of filters (such as echo cancellation)
+### on demand. module-filter-heuristics tries to determine what filters
+### make sense, and module-filter-apply does the heavy-lifting of
+### loading modules and rerouting streams.
+load-module module-filter-heuristics
+load-module module-filter-apply
+
+### Make some devices default
+#set-default-sink output
+#set-default-source input
+
+### Allow including a default.pa.d directory, which if present, can be used
+### for additional configuration snippets.
+### Note that those snippet files must have a .pa file extension, not .conf
+.nofail
+.include /data/data/com.termux/files/usr/etc/pulse/default.pa.d
+load-module module-sles-sink
+#load-module module-aaudio-sink
+EOF
+DAEMON_CONF=$PREFIX/etc/pulse/daemon.conf
+cat > $DAEMON_CONF <<- EOF
+# This file is part of PulseAudio.
+#
+# PulseAudio is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# PulseAudio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
+
+## Configuration file for the PulseAudio daemon. See pulse-daemon.conf(5) for
+## more information. Default values are commented out.  Use either ; or # for
+## commenting.
+
+; daemonize = no
+; fail = yes
+; allow-module-loading = yes
+; allow-exit = yes
+; use-pid-file = yes
+; system-instance = no
+; enable-shm = yes
+; enable-memfd = yes
+; shm-size-bytes = 0 # setting this 0 will use the system-default, usually 64 MiB
+; lock-memory = no
+; cpu-limit = no
+
+; high-priority = yes
+; nice-level = -11
+
+; realtime-scheduling = yes
+; realtime-priority = 5
+
+; exit-idle-time = -1
+; scache-idle-time = 20
+
+; dl-search-path = (depends on architecture)
+
+; load-default-script-file = yes
+; default-script-file = /data/data/com.termux/files/usr/etc/pulse/default.pa
+
+; log-target = auto
+; log-level = notice
+; log-meta = no
+; log-time = no
+; log-backtrace = 0
+
+; resample-method = speex-float-1
+; avoid-resampling = false
+; enable-remixing = yes
+; remixing-use-all-sink-channels = yes
+; remixing-produce-lfe = no
+; remixing-consume-lfe = no
+; lfe-crossover-freq = 0
+
+; flat-volumes = no
+
+; rescue-streams = yes
+
+; rlimit-fsize = -1
+; rlimit-data = -1
+; rlimit-stack = -1
+; rlimit-core = -1
+; rlimit-as = -1
+; rlimit-rss = -1
+; rlimit-nproc = -1
+; rlimit-nofile = 256
+; rlimit-memlock = -1
+; rlimit-locks = -1
+; rlimit-sigpending = -1
+; rlimit-msgqueue = -1
+; rlimit-nice = 31
+; rlimit-rtprio = 9
+; rlimit-rttime = 200000
+
+; default-sample-format = s16le
+; default-sample-rate = 44100
+; alternate-sample-rate = 48000
+; default-sample-channels = 2
+; default-channel-map = front-left,front-right
+
+; default-fragments = 4
+; default-fragment-size-msec = 25
+
+; enable-deferred-volume = yes
+; deferred-volume-safety-margin-usec = 8000
+; deferred-volume-extra-delay-usec = 0
+EOF
 }
 
 
 function create_launcher() {
+   
     NH_SHORTCUT=${PREFIX}/bin/nh
-    cat > $NH_LAUNCHER <<- EOF
+    cat > $NH_SHORTCUT <<- EOF
 #!/data/data/com.termux/files/usr/bin/bash -e
+
 cd \${HOME}
 ## termux-exec sets LD_PRELOAD so let's unset it before continuing
 unset LD_PRELOAD
@@ -160,7 +268,7 @@ if [ ! -f $CHROOT/root/.version ]; then
 fi
 
 ## Default user is "kali"
-user="$USERNAME"
+user="kali"
 home="/home/\$user"
 start="sudo -u kali /bin/bash"
 
@@ -185,6 +293,7 @@ cmdline="proot \\
         -0 \\
         -r $CHROOT \\
         -b /dev \\
+        -b /sdcard \\
         -b /proc \\
         -b $CHROOT\$home:/dev/shm \\
         -w \$home \\
@@ -195,7 +304,6 @@ cmdline="proot \\
            LANG=C.UTF-8 \\
            \$start"
 
-
 cmd="\$@"
 if [ "\$#" == "0" ];then
     exec \$cmdline
@@ -204,28 +312,22 @@ else
 fi
 EOF
 
-    chmod 700 $NH_SHORTCUT
-    if [ -L ${NH_SHORTCUT} ]; then
-        rm -f ${NH_SHORTCUT}
-    fi
-    if [ ! -f ${NH_SHORTCUT} ]; then
-        ln -s ${NH_SHORTCUT} ${NH_SHORTCUT} >/dev/null
-    fi
-   
+    
+chmod +x $PREFIX/bin/nh
+
 }
 
+
 function create_kex_launcher() {
-    KEX_LAUNCHER=${CHROOT}/usr/bin/p
+    KEX_LAUNCHER=kali-arm64/usr/bin/p
     cat > $KEX_LAUNCHER <<- EOF
 #!/bin/bash
-
-function start-kex() {
-rm ~/.vnc/kali:1.log 2>/dev/null
-    rm ~/.vnc/kali:2.log 2>/dev/null
-    rm ~/.vnc/kali:1.pid 2>/dev/null
-    rm ~/.vnc/kali:2.pid 2>/dev/null
+        if [ ! -z \$starting_kex ]; then
+            printf '\nKesalahan memulai server Vnc.\nSilakan coba nh p kill" atau mulai ulang sesi termux Anda dan coba lagi.\n\n'
+            fi
+  
     if [ ! -f ~/.vnc/passwd ]; then
-        passwd-kex
+        vncpasswd
     fi
     USR=\$(whoami)
     if [ \$USR == "root" ]; then
@@ -233,75 +335,40 @@ rm ~/.vnc/kali:1.log 2>/dev/null
     else
         SCREEN=":1"
     fi
-    
-    export HOME=\${HOME}; export USER=\${USR}; LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgcc_s.so.1 nohup vncserver \$SCREEN >/dev/null 2>&1 </dev/null
-    starting_kex=1
-    
-    return 0
-}
 
-function stop-kex() {
+    export HOME=\${HOME}; export USER=\${USR}; export PULSE_SERVER=127.0.0.1; vncserver \$SCREEN >/dev/null 2>&1 </dev/null
+    sessions=\$(vncserver -list | sed s/"TigerVNC"/"NetHunter KeX"/)
+    if [[ \$sessions == *"590"* ]]; then
+        printf "\n\${sessions}\n"
+        printf "\nAnda dapat menggunakan klien Vnc untuk terhubung ke salah satu tampilan ini.\n\n" 
+        fi
+    
+    starting_kex=1
+
+
+EOF
+KEX_LAUNCR=kali-arm64/usr/bin/s
+    cat > $KEX_LAUNCR <<- EOF
   vncserver -kill :1 2>/dev/null
     vncserver -kill :2 2>/dev/null
     rm ~/.vnc/kali:1.log 2>/dev/null
     rm ~/.vnc/kali:2.log 2>/dev/null
     rm ~/.vnc/kali:1.pid 2>/dev/null
     rm ~/.vnc/kali:2.pid 2>/dev/null
-    return $?
-}
-
-function passwd-kex() {
-    vncpasswd
-    return $?
-}
-
-function status-kex() {
-    sessions=\$(vncserver -list | sed s/"TigerVNC"/"NetHunter KeX"/)
-    if [[ \$sessions == *"590"* ]]; then
-        printf "\n\${sessions}\n"
-        printf "\nYou can use the KeX client to connect to any of these displays.\n\n"
-    else
-        if [ ! -z \$starting_kex ]; then
-            printf '\nError starting the KeX server.\nPlease try "nethunter kex kill" or restart your termux session and try again.\n\n'
-        fi
-    fi
-    return 0
-}
-
-function kill-kex() {
     pkill Xtigervnc
+     rm /tmp/.X11-unix/X1 > /dev/null 2>&1
+rm /tmp/.X1-lock > /dev/null 2>&1
     rm ~/.vnc/kali:1.log 2>/dev/null
     rm ~/.vnc/kali:2.log 2>/dev/null
     rm ~/.vnc/kali:1.pid 2>/dev/null
     rm ~/.vnc/kali:2.pid 2>/dev/null
-    return \$?
-}
 
-case \$1 in
-    p)
-        start-kex
-        ;;
-    s)
-        stop-kex
-        ;;
-    status)
-        status-kex
-        ;;
-    pass)
-        passwd-kex
-        ;;
-    kill)
-        kill-kex
-        ;;
-    *)
-        kill-kex
-        start-kex
-        status-kex
-        ;;
-esac
 EOF
 
+
+
     chmod 700 $KEX_LAUNCHER
+    chmod 700 $KEX_LAUNCR
 }
 
 function fix_profile_bash() {
@@ -315,7 +382,7 @@ function fix_sudo() {
     ## fix sudo & su on start
     chmod +s $CHROOT/usr/bin/sudo
     chmod +s $CHROOT/usr/bin/su
-	echo "kali    ALL=(ALL:ALL) ALL" > $CHROOT/etc/sudoers.d/kali
+        echo "kali    ALL=(ALL:ALL) ALL" > $CHROOT/etc/sudoers.d/kali
 
     # https://bugzilla.redhat.com/show_bug.cgi?id=1773148
     echo "Set disable_coredump false" > $CHROOT/etc/sudo.conf
@@ -335,98 +402,63 @@ yellow='\033[5;32m'
 blue='\033[5;34m'
 light_cyan='\033[5;96m'
 reset='\033[0m'
+function ask() {
+    # http://djm.me/ask
+    while true; do
 
-EXTRA_ARGS=""
-if [[ ! -z $1 ]]; then
-    EXTRA_ARGS=$1
-    if [[ $EXTRA_ARGS != "--no-check-certificate" ]]; then
-        EXTRA_ARGS=""
-    fi
-fi
+        if [ "${2:-}" = "Y" ]; then
+            prompt="Y/n"
+            default=Y
+        elif [ "${2:-}" = "N" ]; then
+            prompt="y/N"
+            default=N
+        else
+            prompt="y/n"
+            default=
+        fi
+
+        # Ask the question
+        printf "${yellow}\n[?] "
+        read -p "$1 [$prompt] " REPLY
+
+        # Default?
+        if [ -z "$REPLY" ]; then
+            REPLY=$default
+        fi
+
+        printf "${reset}"
+
+        # Check if the reply is valid
+        case "$REPLY" in
+            Y*|y*) return 0 ;;
+            N*|n*) return 1 ;;
+        esac
+    done
+}
 
 cd $HOME
-
-prepare_fs
 check_dependencies
-get_rootfs
-get_sha
-verify_sha
-extract_rootfs
-create_launcher
-cleanup
+if [ -e "kali-arm64" ]; then
+    printf "${yellow}File atau direktori kali-arm64 ditemukan.\n"
+    if ask "Buat Ulang" "N"; then
+    rm -rf kali-arm64
+    
+    wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.sha512sum
+    wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.tar.xz
+    sha512sum -c kalifs-arm64-minimal.sha512sum
+    proot --link2symlink tar -xf kalifs-arm64-minimal.tar.xz --exclude='dev' ||:
+    rm -rf kalifs-arm64-minimal.tar.xz kalifs-arm64-minimal.sha512sum
+else
+    echo "File atau direktori kali-arm64 tidak ditemukan. Mengunduh dan menginstal..."
 
-printf "\n${blue}          Configuring NetHunter for Termux ...\n"
-printf "\e[5;31m               Tunggu Beberapa Menit... 👌\n"
-sleep 1.4
-printf "\e[0m "
-clear
-fix_profile_bash
-fix_sudo
-create_kex_launcher
-fix_uid
-nh rm /bin/kali-motd; rm /bin/kernel-install
-
-rm ~/kali-arm64/etc/apt/sources.list
-echo "deb https://ftp.debian.org/debian stable main contrib non-free non-free-firmware" >> ~/kali-arm64/etc/apt/sources.list
-echo "deb https://mirror.primelink.net.id/kali kali-rolling main contrib non-free" >> ~/kali-arm64/etc/apt/sources.list
-echo "nameserver 8.8.8.8" >> ~/kali-arm64/etc/resolv.conf
-nh -r apt update
-#nh -r apt-get install git wget -y 2>/dev/null
-nh -r sudo apt-get -f install
-nh -r apt install kali-themes dbus-x11 tigervnc-standalone-server -y
-
-#
-nh echo "XKBLAYOUT=\"us\"" | sudo tee /etc/default/keyboard
-echo 'setxkbmap -layout "us"' >> ~/.config/xfce4/xinitrc
-
-#
-
-nh -r apt install xfce4 xfce4-terminal xfce4-whiskermenu-plugin -y
-nh echo "Asia/Jakarta" | sudo tee /etc/timezone
-nh -r dpkg-reconfigure --frontend noninteractive tzdata
-nh -r apt autoremove -y
-sleep 1
-echo '#!/bin/sh
-unset SESSION_MANAGER
-unset DBUS_SESSION_BUS_ADDRESS
-export SHELL=/bin/bash
-startxfce4' >> ~/kali-arm64/home/kali/.vnc/xstartup
-nh chmod +x .vnc/xstartup
-nh -r apt install chromium -y 2>/dev/null
-nh -r apt-get install firefox-esr -y 2>/dev/null
-nh mkdir -p /home/kali/Desktop
-nh cat <<EOF > ~/kali-arm64/home/kali/Desktop/firefox-esr.desktop
-[Desktop Entry]
-Version=1.0
-Name=Firefox ESR Web Browser
-Exec=/usr/bin/firefox-esr %u
-Terminal=false
-X-MultipleArgs=false
-Type=Application
-Icon=firefox-esr
-Categories=Network;WebBrowser;
-MimeType=text/html;text/xml;application/xhtml_xml;application/x-mimearchive;x-scheme-handler/http;x-scheme-handler/https;
-StartupWMClass=Firefox-esr
-StartupNotify=true
-Keywords=browser
-EOF
-cat <<EOF > ~/kali-arm64/home/kali/Desktop/chromium.desktop
-[Desktop Entry]
-Version=1.0
-Name=Browser Web Chromium
-Exec=/usr/bin/chromium --no-sandbox %U
-Terminal=false
-X-MultipleArgs=false
-Type=Application
-Icon=chromium
-Categories=Network;WebBrowser;
-MimeType=text/html;text/xml;application/xhtml_xml;application/x-mimearchive;x-scheme-handler/http;x-scheme-handler/https;
-StartupWMClass=chromium
-StartupNotify=true
-Keywords=browser
-EOF
-chmod 700 ~/kali-arm64/home/kali/Desktop/chromium.desktop
-chmod 700 ~/kali-arm64/home/kali/Desktop/firefox-esr.desktop
+    wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.sha512sum
+    wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.tar.xz
+    sha512sum -c kalifs-arm64-minimal.sha512sum
+    proot --link2symlink tar -xf kalifs-arm64-minimal.tar.xz --exclude='dev' ||:
+    rm -rf kalifs-arm64-minimal.tar.xz kalifs-arm64-minimal.sha512sum
+fi
+fi
+panels(){
 ##################### Panel #############################
 rm -rf ~/kali-arm64/home/kali/.config/xfce4/panel
 mkdir -p ~/kali-arm64/home/kali/.config/xfce4/panel
@@ -778,11 +810,115 @@ cat <<EOF > ~/kali-arm64/home/kali/.config/xfce4/xfconf/xfce-perchannel-xml/xfce
 </channel>
 EOF
 ############################################################
+}
+
+create_launcher
+sound_setup
 
 
+printf "\n${blue}          Configuring NetHunter for Termux ...\n"
+printf "\e[5;31m               Tunggu Beberapa Menit... 👌\n"
+sleep 1.4
+printf "\e[0m "
+clear
+fix_profile_bash
+fix_sudo
+if [ -f "${PREFIX}/bin/nh" ]; then
+    create_launcher
+else
+    echo "Error"
+fi
+
+fix_uid
+nh rm /bin/kali-motd &> /dev/null
+nh rm /bin/kernel-install &> /dev/null
+
+rm ~/kali-arm64/etc/apt/sources.list
+echo "deb https://ftp.debian.org/debian stable main contrib non-free non-free-firmware" >> ~/kali-arm64/etc/apt/sources.list
+echo "deb https://mirror.primelink.net.id/kali kali-rolling main contrib non-free" >> ~/kali-arm64/etc/apt/sources.list
+rm ~/kali-arm64/etc/resolv.conf
+echo "nameserver 8.8.8.8" >> ~/kali-arm64/etc/resolv.conf
+nh -r apt update
+nh echo "Asia/Jakarta" | sudo tee /etc/timezone
+nh -r dpkg-reconfigure --frontend noninteractive tzdata
+#nh -r apt-get install git wget -y 2>/dev/null
+fire(){
+if ask "Install Firefox" "N"; then
+nh -r apt-get install firefox-esr -y 
+
+nh mkdir -p /home/kali/Desktop
+nh cat <<EOF > ~/kali-arm64/home/kali/Desktop/firefox-esr.desktop
+[Desktop Entry]
+Version=1.0
+Name=Firefox ESR Web Browser
+Exec=/usr/bin/firefox-esr %u
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=firefox-esr
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml_xml;application/x-mimearchive;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=Firefox-esr
+StartupNotify=true
+Keywords=browser
+EOF
+chmod 700 ~/kali-arm64/home/kali/Desktop/firefox-esr.desktop
+else
+printf "\033[33mOkeh\n"
+fi
+}
+chrom(){
+if ask "Install Chromium" "N"; then
+nh -r apt install chromium -y 
+cat <<EOF > ~/kali-arm64/home/kali/Desktop/chromium.desktop
+[Desktop Entry]
+Version=1.0
+Name=Browser Web Chromium
+Exec=/usr/bin/chromium --no-sandbox %U
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=chromium
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml_xml;application/x-mimearchive;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=chromium
+StartupNotify=true
+Keywords=browser
+EOF
+chmod 700 ~/kali-arm64/home/kali/Desktop/chromium.desktop
+else
+printf "\033[33mOkeh\n"
+fi
+}
+    if ask "Install Vncserver dan Dekstop xfce4" "N"; then
+nh -r sudo apt-get -f install
+nh -r apt install dbus-x11 tigervnc-standalone-server -y
+nh -r apt install xfce4 xfce4-terminal xfce4-whiskermenu-plugin -y
+echo '#!/bin/sh
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+export SHELL=/bin/bash
+startxfce4' >> ~/kali-arm64/home/kali/.vnc/xstartup
+nh chmod +x .vnc/xstartup
+fire
+chrom
+panels
+else
+printf "\n\033[33mOkeh\n${reset}"
+fi
+
+
+#
+
+
+
+
+create_kex_launcher
+#echo "123456" | vncpasswd -f > ~/kali-arm64/home/kali/.vnc/passwd > /dev/null 2>&1
+#echo "123456" | vncpasswd -f > ~/kali-arm64/root/.vnc/passwd > /dev/null 2>&1
 sleep 1
-rm -rf ~/$Home/kali-nethunter
-cd ~/$Home
+
+cd
 clear
 printf "\033[5;33m                  Nanti Atur² Sendiri Ya😄\n"
 sleep 5
@@ -800,6 +936,13 @@ printf "\e[5;31m *\e[4;36m nh          \e[5;0m \e[5;33m▶ Start Nethunter\n"
 printf "\e[5;34m╭─────────────────────────────────────────╮\n"
 
 printf "\r"
-printf "\e[5;0m \e[5;33m[+] Masukan Password untuk VNCSERVER\e[5;0m\n"
+printf "\e[5;0m \e[5;33m[+] 123456 Password untuk VNCSERVER\e[5;0m\n"
 printf "\e[5;0m \e[5;33m[+] Ketikan (ctrl + z) Kalau Susah Keluar\e[5;0m\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
+rm -rf ~/$Home/kali-nethunter
+
+
+
+
+
+
