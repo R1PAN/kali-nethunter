@@ -10,7 +10,7 @@ fi
 
     CHROOT=kali-arm64
 
-function check_dependencies() {
+check_dependencies(){
     printf "${blue}\n[*] Checking package dependencies...${reset}\n"
     apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
 termux-setup-storage
@@ -437,12 +437,12 @@ function ask() {
 }
 
 cd $HOME
-check_dependencies
+
 if [ -e "kali-arm64" ]; then
     printf "\n${yellow}File atau direktori kali-arm64 ditemukan.\n"
     if ask "Buat Ulang" "N"; then
     rm -rf kali-arm64
-    
+    check_dependencies
     wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.sha512sum
     wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.tar.xz
     sha512sum -c kalifs-arm64-minimal.sha512sum
@@ -450,8 +450,8 @@ if [ -e "kali-arm64" ]; then
     rm -rf kalifs-arm64-minimal.tar.xz kalifs-arm64-minimal.sha512sum
     fi
 else
-    echo "File atau direktori kali-arm64 tidak ditemukan. Mengunduh dan menginstal..."
-
+    printf "\033[33mMengunduh dan menginstal...\033[0m\n"
+check_dependencies
     wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.sha512sum
     wget $EXTRA_ARGS --continue http://kali.download/nethunter-images/current/rootfs/kalifs-arm64-minimal.tar.xz
     sha512sum -c kalifs-arm64-minimal.sha512sum
@@ -839,7 +839,8 @@ echo "deb https://mirror.primelink.net.id/kali kali-rolling main contrib non-fre
 rm ~/kali-arm64/etc/resolv.conf
 echo "nameserver 8.8.8.8" >> ~/kali-arm64/etc/resolv.conf
 nh -r apt update
-nh echo "Asia/Jakarta" | sudo tee /etc/timezone
+rm -rf ~/kali-arm64/etc/timezone
+echo "Asia/Jakarta" >> ~/kali-arm64/etc/timezone
 nh -r dpkg-reconfigure --frontend noninteractive tzdata
 #nh -r apt-get install git wget -y 2>/dev/null
 fire(){
