@@ -13,8 +13,8 @@ fi
 function check_dependencies() {
     printf "${blue}\n[*] Checking package dependencies...${reset}\n"
     apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
-
-    for i in proot tar wget pulseaudio; do
+termux-setup-storage
+    for i in proot tar pulseaudio wget; do
         if [ -e $PREFIX/bin/$i ]; then
             echo "  $i is OK"
         else
@@ -940,9 +940,3 @@ printf "\e[5;0m \e[5;33m[+] 123456 Password untuk VNCSERVER\e[5;0m\n"
 printf "\e[5;0m \e[5;33m[+] Ketikan (ctrl + z) Kalau Susah Keluar\e[5;0m\n"
 printf "\e[5;34m╰─────────────────────────────────────────╯\n"
 rm -rf ~/$Home/kali-nethunter
-
-
-
-
-
-
