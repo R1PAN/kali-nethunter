@@ -448,6 +448,7 @@ if [ -e "kali-arm64" ]; then
     sha512sum -c kalifs-arm64-minimal.sha512sum
     proot --link2symlink tar -xf kalifs-arm64-minimal.tar.xz --exclude='dev' ||:
     rm -rf kalifs-arm64-minimal.tar.xz kalifs-arm64-minimal.sha512sum
+    fi
 else
     echo "File atau direktori kali-arm64 tidak ditemukan. Mengunduh dan menginstal..."
 
@@ -456,7 +457,6 @@ else
     sha512sum -c kalifs-arm64-minimal.sha512sum
     proot --link2symlink tar -xf kalifs-arm64-minimal.tar.xz --exclude='dev' ||:
     rm -rf kalifs-arm64-minimal.tar.xz kalifs-arm64-minimal.sha512sum
-fi
 fi
 panels(){
 ##################### Panel #############################
