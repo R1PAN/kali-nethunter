@@ -310,6 +310,8 @@ if [ "\$#" == "0" ];then
 else
     \$cmdline -c "\$cmd"
 fi
+pkill pulseaudio
+
 EOF
 
     
