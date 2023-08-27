@@ -266,7 +266,7 @@ unset LD_PRELOAD
 if [ ! -f $CHROOT/root/.version ]; then
     touch $CHROOT/root/.version
 fi
-
+pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
 ## Default user is "kali"
 user="kali"
 home="/home/\$user"
