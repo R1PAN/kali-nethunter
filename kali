@@ -12,7 +12,7 @@ fi
 
 check_dependencies(){
     printf "${blue}\n[*] Checking package dependencies...${reset}\n"
-    apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
+    yes | pkg update &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
 termux-setup-storage
     for i in proot tar pulseaudio wget; do
         if [ -e $PREFIX/bin/$i ]; then
