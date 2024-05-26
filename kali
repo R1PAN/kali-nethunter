@@ -257,7 +257,7 @@ function create_launcher() {
    
     NH_SHORTCUT=${PREFIX}/bin/nh
     cat > $NH_SHORTCUT <<- EOF
-#!/data/data/com.termux/files/usr/bin/bash -e
+
 rm -r ~/.config/pulse &> /dev/null
 
 cd \${HOME}
